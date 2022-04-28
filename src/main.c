@@ -4,49 +4,56 @@
 #include <stm32f4xx_hal_gpio.h>
 #include <stm32f4xx_hal_gpio_ex.h>
 
-
-/* from UM1974 :
-	User LD1: a green user LED is connected to the STM32 I/O PB0 (SB120 ON and SB119
-	OFF) or PA5 (SB119 ON and SB120 OFF) corresponding to the ST Zio D13.
-	User LD2: a blue user LED is connected to PB7.
-	User LD3: a red user LED is connected to PB14.
-*/
-
-#define LED_GREEN_PIN                               GPIO_PIN_0
-#define LED_GREEN_GPIO_PORT                         GPIOB
-#define LED_GREEN_GPIO_CLK_ENABLE()                 __HAL_RCC_GPIOB_CLK_ENABLE()
-
-#define LED_BLUE_PIN                                GPIO_PIN_7
-#define LED_BLUE_GPIO_PORT                          GPIOB
-#define LED_BLUE_GPIO_CLK_ENABLE()                  __HAL_RCC_GPIOB_CLK_ENABLE()
+#include <stm32f4xx_ll_gpio.h>
 
 #define LED_RED_PIN                                 GPIO_PIN_14
 #define LED_RED_GPIO_PORT                           GPIOB
 #define LED_RED_GPIO_CLK_ENABLE()                   __HAL_RCC_GPIOB_CLK_ENABLE()
 
-#define LED_PIN LED_RED_PIN
-#define LED_GPIO_PORT LED_RED_GPIO_PORT
-#define LED_GPIO_CLK_ENABLE LED_RED_GPIO_CLK_ENABLE
-
 int main(void)
 {
 	HAL_Init();
 
-	LED_GPIO_CLK_ENABLE();
+	LED_RED_GPIO_CLK_ENABLE();
+
+	HAL_GPIO_Init(LED_RED_GPIO_PORT, &(GPIO_InitTypeDef) {
+		.Pin = LED_RED_PIN,
+		.Mode = GPIO_MODE_OUTPUT_PP,
+		.Pull = GPIO_PULLUP,
+		.Speed = GPIO_SPEED_FREQ_HIGH
+	});
+
+	HAL_GPIO_WritePin(LED_RED_GPIO_PORT, LED_RED_PIN, GPIO_PIN_SET);
+	
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct = {
-		.Pin = LED_PIN,
+		.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12,
 		.Mode = GPIO_MODE_OUTPUT_PP,
 		.Pull = GPIO_PULLUP,
 		.Speed = GPIO_SPEED_FREQ_HIGH
 	};
 
-	HAL_GPIO_Init(LED_GPIO_PORT, &GPIO_InitStruct);
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_8 | LL_GPIO_PIN_9 | LL_GPIO_PIN_10 | LL_GPIO_PIN_11 | LL_GPIO_PIN_12);
+	
+	uint32_t counter = 0;
 
 	for (;;) {
-		HAL_GPIO_TogglePin(LED_GPIO_PORT, LED_PIN);
+		for (uint32_t bit = 0U; bit < 5U; bit++) {
+			if (counter & (1U << bit)) {
+				LL_GPIO_SetOutputPin(GPIOC, GPIO_PIN_8 << bit);
+			} else {
+				LL_GPIO_ResetOutputPin(GPIOC, GPIO_PIN_8 << bit);
+			}
+		}
 
-		HAL_Delay(1000);
+		HAL_GPIO_TogglePin(LED_RED_GPIO_PORT, LED_RED_PIN);
+
+		HAL_Delay(1);
+
+		counter++;
 	}
 }
 
