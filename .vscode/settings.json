@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.asm": "avr",
+        "stm32f4xx_hal_crc.h": "c",
+        "stm32f4xx_hal_gpio.h": "c",
+        "stm32f4xx_hal_gpio_ex.h": "c"
+    }
+}
